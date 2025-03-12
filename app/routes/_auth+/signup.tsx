@@ -1,10 +1,21 @@
-import { Link } from "react-router";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faUser, faLock, faEnvelope } from "@fortawesome/free-solid-svg-icons";
+import { getZodConstraint, parseWithZod } from "@conform-to/zod";
+import { getFormProps, getInputProps, useForm } from "@conform-to/react";
+import { data, Form, Link, redirect } from "react-router";
+import { faLock, faEnvelope, faUser } from "@fortawesome/free-solid-svg-icons";
 import { Button } from "../../components/ui/button";
-import type { Route } from "../+types/_index";
+import { z } from "zod";
+import type { Route } from "./+types/signup.ts";
+import { ErrorList } from "../../components/ui/errorList";
+import { Field } from "~/components/forms";
+import {
+	EmailSchema,
+	NameSchema,
+	PasswordSchema,
+} from "~/utils/user_validation";
+import { Checkbox } from "~/components/ui/checkbox";
+import { Label } from "~/components/ui/label";
 
-export function meta({}: Route.MetaArgs) {
+export function meta() {
 	return [
 		{ title: "Sign Up - Kabarak Student Welfare Management System" },
 		{
@@ -15,7 +26,47 @@ export function meta({}: Route.MetaArgs) {
 	];
 }
 
-export default function SignupPage() {
+const SignupSchema = z
+	.object({
+		email: EmailSchema,
+		password: PasswordSchema,
+		name: NameSchema,
+		confirmPassword: z.string(),
+		rememberMe: z.boolean().optional().default(false),
+	})
+	.refine((data) => data.password === data.confirmPassword, {
+		message: "Passwords don't match",
+		path: ["confirmPassword"],
+	});
+
+export async function action({ request }: Route.ActionArgs) {
+	const formData = await request.formData();
+	const submission = parseWithZod(formData, { schema: SignupSchema });
+
+	if (submission.status !== "success") {
+		return data(
+			{ result: submission.reply() },
+			{
+				status: 400,
+			},
+		);
+	}
+
+	console.log("Successfully validated:", submission.value);
+	return redirect("/");
+}
+
+export default function SignupPage({ actionData }: Route.ComponentProps) {
+	const [form, fields] = useForm({
+		id: "signup-form",
+		constraint: getZodConstraint(SignupSchema),
+		lastResult: actionData?.result,
+		onValidate({ formData }) {
+			return parseWithZod(formData, { schema: SignupSchema });
+		},
+		shouldRevalidate: "onBlur",
+	});
+
 	return (
 		<div className="flex-1 flex justify-center items-center px-4 py-12">
 			<div className="w-full max-w-md bg-background/80 backdrop-blur-sm rounded-lg shadow-md p-8">
@@ -31,78 +82,104 @@ export default function SignupPage() {
 					Sign Up
 				</h2>
 
-				<form className="space-y-6">
-					{/* Email Field */}
-					<div className="space-y-2">
-						<label
-							htmlFor="email"
-							className="text-body-sm text-muted-foreground block"
-						>
-							Email
-						</label>
-						<div className="relative">
-							<div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-								<FontAwesomeIcon icon={faEnvelope} />
-							</div>
-							<input
-								id="email"
-								type="email"
-								className="w-full pl-10 pr-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
-								placeholder="University email address"
-								required
-							/>
-						</div>
+				<Form method="post" {...getFormProps(form)} className="space-y-1">
+					<Field
+						labelProps={{ children: "Email" }}
+						inputProps={{
+							...getInputProps(fields.email, { type: "email" }),
+							placeholder: "University email address",
+							required: true,
+						}}
+						icon={faEnvelope}
+						errors={fields.email.errors}
+					/>
+
+					<Field
+						labelProps={{ children: "Full Name" }}
+						inputProps={{
+							...getInputProps(fields.name, { type: "text" }),
+							placeholder: "Full name",
+							required: true,
+						}}
+						icon={faUser}
+						errors={fields.name.errors}
+					/>
+
+					<Field
+						labelProps={{ children: "Password" }}
+						inputProps={{
+							...getInputProps(fields.password, { type: "password" }),
+							placeholder: "Password",
+							required: true,
+						}}
+						icon={faLock}
+						errors={fields.password.errors}
+					/>
+
+					<Field
+						labelProps={{ children: "Confirm Password" }}
+						inputProps={{
+							...getInputProps(fields.confirmPassword, { type: "password" }),
+							placeholder: "Confirm password",
+							required: true,
+						}}
+						icon={faLock}
+						errors={fields.confirmPassword.errors}
+					/>
+
+					<div className="flex items-center space-x-2 mt-3">
+						<Checkbox
+							{...getInputProps(fields.rememberMe, {
+								type: "checkbox",
+							})}
+							onCheckedChange={(checked) => {
+								const value = checked === true;
+								const input = document.createElement("input");
+								input.type = "checkbox";
+								input.name = fields.rememberMe.name;
+								input.checked = value;
+								const event = new Event("change", { bubbles: true });
+								input.dispatchEvent(event);
+								const formElement = document.getElementById(form.id);
+								formElement?.appendChild(input);
+								requestAnimationFrame(() => {
+									formElement?.removeChild(input);
+								});
+							}}
+							id="remember-me"
+						/>
+						<Label htmlFor="remember-me" className="text-body-sm">
+							Remember me
+						</Label>
 					</div>
 
-					{/* Password Field */}
-					<div className="space-y-2">
-						<label
-							htmlFor="password"
-							className="text-body-sm text-muted-foreground block"
-						>
-							Password
-						</label>
-						<div className="relative">
-							<div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-								<FontAwesomeIcon icon={faLock} />
+					{form.errors && (
+						<div className="rounded-md bg-red-50 p-3">
+							<div className="flex gap-2 text-red-700">
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									viewBox="0 0 20 20"
+									fill="currentColor"
+									className="h-5 w-5 flex-shrink-0"
+								>
+									<title>Close</title>
+									<path
+										fillRule="evenodd"
+										d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"
+										clipRule="evenodd"
+									/>
+								</svg>
+								<div>
+									<ErrorList errors={form.errors} />
+								</div>
 							</div>
-							<input
-								id="password"
-								type="password"
-								className="w-full pl-10 pr-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
-								placeholder="Password"
-								required
-							/>
 						</div>
-					</div>
+					)}
 
-					{/* Confirm Password Field */}
-					<div className="space-y-2">
-						<label
-							htmlFor="confirmPassword"
-							className="text-body-sm text-muted-foreground block"
-						>
-							Confirm Password
-						</label>
-						<div className="relative">
-							<div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-								<FontAwesomeIcon icon={faLock} />
-							</div>
-							<input
-								id="confirmPassword"
-								type="password"
-								className="w-full pl-10 pr-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
-								placeholder="Confirm password"
-								required
-							/>
-						</div>
-					</div>
-
-					{/* Submit Button */}
-					<Button variant="accent" fullWidth type="submit">
+					<Button variant="accent" fullWidth type="submit" className="mt-4">
 						Sign Up
 					</Button>
-				</form>
+				</Form>
 
 				<div className="mt-8 pt-6 border-t border-border text-center">
 					<p className="text-muted-foreground">

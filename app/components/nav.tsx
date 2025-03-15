@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import { Form, Link } from "react-router";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
 	faTachometerAlt,
@@ -125,13 +125,13 @@ export default function Nav({ username }: NavProps) {
 										Settings
 									</Link>
 									<div className="border-t border-gray-200"></div>
-									<Link
-										to="/logout"
-										className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-										onClick={() => setIsUserDropdownOpen(false)}
+									<Form
+										className="block w-max px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+										method="post"
+										action="/logout"
 									>
-										Sign out
-									</Link>
+										log out
+									</Form>
 								</div>
 							</div>
 						)}
@@ -234,12 +234,14 @@ export default function Nav({ username }: NavProps) {
 					{/* Conditional Sign out option in mobile menu */}
 					{username ? (
 						<li className="border-t border-brand-darker">
-							<Link
-								to="/logout"
-								className="flex items-center gap-3 px-6 py-4 text-white hover:bg-brand-darker transition-colors"
-							>
-								<span>Sign out</span>
-							</Link>
+							<Form method="post" action="/logout">
+								<button
+									type="submit"
+									className="flex items-center gap-3 px-6 py-4 text-white hover:bg-brand-darker transition-colors"
+								>
+									log out
+								</button>
+							</Form>
 						</li>
 					) : (
 						<li className="border-t border-brand-darker">

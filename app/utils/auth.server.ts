@@ -1,4 +1,5 @@
 import * as bcrypt from "bcryptjs";
+import { redirect } from "react-router";
 import { db } from "database/context";
 import { users, sessions } from "database/schema";
 import { authSessionStorage } from "./session.server";
@@ -135,4 +136,31 @@ export async function signUp({
 			expiresAt,
 		};
 	return null;
+}
+
+export async function logout({
+	request,
+	redirectTo = "/",
+}: {
+	request: Request;
+	redirectTo?: string;
+}) {
+	const session = await authSessionStorage.getSession(
+		request.headers.get("cookie"),
+	);
+	const sessionId = session.get(sessionKey);
+
+	if (sessionId) {
+		try {
+			await db.delete(sessions).where(eq(sessions.id, sessionId));
+		} catch (error) {
+			console.error("Failed to delete session from database:", error);
+		}
+	}
+
+	return redirect(redirectTo, {
+		headers: {
+			"Set-Cookie": await authSessionStorage.destroySession(session),
+		},
+	});
 }

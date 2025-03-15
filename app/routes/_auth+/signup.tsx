@@ -6,15 +6,13 @@ import { Button } from "../../components/ui/button";
 import { z } from "zod";
 import type { Route } from "./+types/signup.ts";
 import { ErrorList } from "../../components/ui/errorList";
-import { Field } from "~/components/forms";
+import { CheckboxField, Field } from "~/components/forms";
 import {
 	EmailSchema,
 	NameSchema,
 	PasswordSchema,
 	UsernameSchema,
 } from "~/utils/user_validation";
-import { Checkbox } from "~/components/ui/checkbox";
-import { Label } from "~/components/ui/label";
 import { sessionKey, signUp } from "~/utils/auth.server";
 import { authSessionStorage } from "~/utils/session.server";
 
@@ -168,32 +166,16 @@ export default function SignupPage({ actionData }: Route.ComponentProps) {
 						icon={faLock}
 						errors={fields.confirmPassword.errors}
 					/>
-
-					<div className="flex items-center space-x-2 mt-3">
-						<Checkbox
-							{...getInputProps(fields.rememberMe, {
-								type: "checkbox",
-							})}
-							onCheckedChange={(checked) => {
-								const value = checked === true;
-								const input = document.createElement("input");
-								input.type = "checkbox";
-								input.name = fields.rememberMe.name;
-								input.checked = value;
-								const event = new Event("change", { bubbles: true });
-								input.dispatchEvent(event);
-								const formElement = document.getElementById(form.id);
-								formElement?.appendChild(input);
-								requestAnimationFrame(() => {
-									formElement?.removeChild(input);
-								});
-							}}
-							id="remember-me"
-						/>
-						<Label htmlFor="remember-me" className="text-body-sm">
-							Remember me
-						</Label>
-					</div>
+					<CheckboxField
+						labelProps={{
+							children: "Remember me",
+						}}
+						buttonProps={getInputProps(fields.rememberMe, {
+							type: "checkbox",
+						})}
+						errors={fields.rememberMe.errors}
+						className="mt-2"
+					/>
 
 					{form.errors && (
 						<div className="rounded-md bg-red-50 p-3">

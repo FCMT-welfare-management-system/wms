@@ -61,7 +61,17 @@ export function CheckboxField({
 	buttonProps,
 	errors,
 	className,
-}: CheckboxFieldProps) {
+}: {
+	labelProps: React.ComponentProps<"label">;
+	buttonProps: CheckboxProps & {
+		name: string;
+		form: string;
+		value?: string;
+		key?: string;
+	};
+	errors?: ListOfErrors;
+	className?: string;
+}) {
 	const { key, defaultChecked, ...checkboxProps } = buttonProps;
 	const fallbackId = useId();
 	const checkedValue = buttonProps.value ?? "on";
@@ -75,7 +85,7 @@ export function CheckboxField({
 	const errorId = errors?.length ? `${id}-error` : undefined;
 
 	return (
-		<div className={cn("space-y-2", className)}>
+		<div className={className}>
 			<div className="flex gap-2">
 				<Checkbox
 					{...checkboxProps}

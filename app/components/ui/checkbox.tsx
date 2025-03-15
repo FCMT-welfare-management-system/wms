@@ -1,43 +1,41 @@
+import * as CheckboxPrimitive from "@radix-ui/react-checkbox";
 import * as React from "react";
 import { cn } from "~/utils/misc";
 
-type BaseCheckboxProps = Omit<
-	React.InputHTMLAttributes<HTMLInputElement>,
-	"checked" | "onChange"
->;
+export type CheckboxProps = Omit<
+	React.ComponentPropsWithoutRef<typeof CheckboxPrimitive.Root>,
+	"type"
+> & {
+	type?: string;
+};
 
-export interface CheckboxProps extends BaseCheckboxProps {
-	onCheckedChange?: (checked: boolean | "indeterminate") => void;
-	checked?: boolean | "indeterminate";
-}
-
-const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
-	({ className, checked, onCheckedChange, ...props }, ref) => {
-		const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-			onCheckedChange?.(event.target.checked);
-		};
-
-		return (
-			<div className={cn("relative flex items-center", className)}>
-				<input
-					type="checkbox"
-					className="h-4 w-4 rounded border-gray-300 text-brand focus:ring-brand"
-					checked={checked === "indeterminate" ? false : checked}
-					onChange={handleChange}
-					ref={ref}
-					{...props}
+const Checkbox = React.forwardRef<
+	React.ComponentRef<typeof CheckboxPrimitive.Root>,
+	React.ComponentPropsWithoutRef<typeof CheckboxPrimitive.Root>
+>(({ className, ...props }, ref) => (
+	<CheckboxPrimitive.Root
+		ref={ref}
+		className={cn(
+			"peer h-4 w-4 shrink-0 rounded-sm border border-input ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-brand data-[state=checked]:text-primary-foreground",
+			className,
+		)}
+		{...props}
+	>
+		<CheckboxPrimitive.Indicator
+			className={cn("flex items-center justify-center text-current")}
+		>
+			<svg viewBox="0 0 8 8">
+				<path
+					d="M1,4 L3,6 L7,2"
+					stroke="currentcolor"
+					strokeWidth="1"
+					fill="none"
 				/>
-				{checked === "indeterminate" && (
-					<div
-						className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-current"
-						aria-hidden="true"
-					/>
-				)}
-			</div>
-		);
-	},
-);
+			</svg>
+		</CheckboxPrimitive.Indicator>
+	</CheckboxPrimitive.Root>
+));
 
-Checkbox.displayName = "Checkbox";
+Checkbox.displayName = CheckboxPrimitive.Root.displayName;
 
 export { Checkbox };

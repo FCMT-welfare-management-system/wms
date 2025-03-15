@@ -2,7 +2,7 @@ import * as bcrypt from "bcryptjs";
 import { db } from "database/context";
 import { users, sessions } from "database/schema";
 import { authSessionStorage } from "./session.server";
-import { Column, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 export async function getPasswordHash(password: string) {
 	const hash = await bcrypt.hash(password, 10);
@@ -32,6 +32,69 @@ export const getUserId = async (request: Request) => {
 
 	return userResults.length > 0 ? userResults[0].userId : null;
 };
+
+export async function verifyUserPassword(
+	emailOrUsername: string,
+	password: string,
+) {
+	// Check if the input is an email (contains @) or a username
+	const isEmail = emailOrUsername.includes("@");
+
+	const userResults = await db
+		.select({
+			id: users.id,
+			passwordHash: users.passwordHash,
+		})
+		.from(users)
+		.where(
+			isEmail
+				? eq(users.email, emailOrUsername)
+				: eq(users.username, emailOrUsername),
+		);
+
+	if (userResults.length === 0) {
+		return null;
+	}
+
+	const user = userResults[0];
+	const isValid = await bcrypt.compare(password, user.passwordHash);
+
+	if (!isValid) {
+		return null;
+	}
+
+	return { id: user.id };
+}
+
+export async function login({
+	emailOrUsername,
+	password,
+}: {
+	emailOrUsername: string;
+	password: string;
+}) {
+	const user = await verifyUserPassword(emailOrUsername, password);
+	if (!user) return null;
+
+	const expiresAt = getSessionExpirationDate();
+	const [{ sessionId }] = await db
+		.insert(sessions)
+		.values({
+			userId: user.id,
+			expiresAt,
+		})
+		.returning({
+			sessionId: sessions.id,
+		});
+
+	if (sessionId) {
+		return {
+			id: sessionId,
+			expiresAt,
+		};
+	}
+	return null;
+}
 
 export async function signUp({
 	email,

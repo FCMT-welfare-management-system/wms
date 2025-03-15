@@ -59,7 +59,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
 		<main className="flex flex-col min-h-screen bg-gradient-to-b from-muted to-accent-brand/30">
 			{/* Hero Section */}
 			<section className="flex flex-col items-center px-4 pt-16 pb-20 md:pt-24 md:pb-32">
-				<div className="max-w-3xl w-full bg-background/60 backdrop-blur-sm rounded-lg shadow-md p-8 md:p-12 flex flex-col items-center">
+				<div className="max-w-3xl w-full bg-background/60  rounded-lg shadow-md p-8 md:p-12 flex flex-col items-center">
 					<h1 className="text-h3 md:text-h2 font-bold text-brand mb-4 text-center">
 						Support. Connect. Thrive.
 					</h1>

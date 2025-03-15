@@ -1,4 +1,5 @@
 import {
+	data,
 	isRouteErrorResponse,
 	Links,
 	Meta,
@@ -8,8 +9,12 @@ import {
 } from "react-router";
 
 import type { Route } from "./+types/root";
+import { eq } from "drizzle-orm";
 import "./app.css";
+import { getUserId } from "./utils/auth.server";
 import Nav from "./components/nav";
+import { db } from "database/context";
+import { users } from "database/schema";
 
 export const links: Route.LinksFunction = () => [
 	{ rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -42,11 +47,35 @@ export function Layout({ children }: { children: React.ReactNode }) {
 	);
 }
 
-export default function App() {
-	//TODO:: render different nav based on login status
+export async function loader({ request }: Route.LoaderArgs) {
+	const userId = await getUserId(request);
+	let user = null;
+	if (userId) {
+		const userResults = await db
+			.select({
+				id: users.id,
+				username: users.username,
+				name: users.name,
+				email: users.email,
+			})
+			.from(users)
+			.where(eq(users.id, userId));
+
+		if (userResults.length > 0) {
+			user = userResults[0];
+		}
+	}
+	if (userId && !user) {
+		console.error("something is wrong user is  Logged in but not found in db");
+		//TODO: log the user out
+	}
+	return data({ user });
+}
+export default function App({ loaderData }: Route.ComponentProps) {
+	const { user } = loaderData;
 	return (
 		<main>
-			<Nav />
+			<Nav username={user?.username} />
 			<Outlet />
 			<footer className="mt-auto bg-accent-brand py-6 px-4 text-center text-foreground">
 				<p className="text-body-sm">

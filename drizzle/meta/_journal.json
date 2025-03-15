@@ -8,6 +8,20 @@
       "when": 1741800196413,
       "tag": "0000_confused_sue_storm",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1741852101095,
+      "tag": "0001_mysterious_scream",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1742002407119,
+      "tag": "0002_bitter_misty_knight",
+      "breakpoints": true
     }
   ]
 }

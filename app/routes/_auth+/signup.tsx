@@ -11,9 +11,12 @@ import {
 	EmailSchema,
 	NameSchema,
 	PasswordSchema,
+	UsernameSchema,
 } from "~/utils/user_validation";
 import { Checkbox } from "~/components/ui/checkbox";
 import { Label } from "~/components/ui/label";
+import { sessionKey, signUp } from "~/utils/auth.server";
+import { authSessionStorage } from "~/utils/session.server";
 
 export function meta() {
 	return [
@@ -31,6 +34,7 @@ const SignupSchema = z
 		email: EmailSchema,
 		password: PasswordSchema,
 		name: NameSchema,
+		username: UsernameSchema,
 		confirmPassword: z.string(),
 		rememberMe: z.boolean().optional().default(false),
 	})
@@ -38,12 +42,31 @@ const SignupSchema = z
 		message: "Passwords don't match",
 		path: ["confirmPassword"],
 	});
+//TODO: if the user is already logged in kick them out.
 
 export async function action({ request }: Route.ActionArgs) {
 	const formData = await request.formData();
-	const submission = parseWithZod(formData, { schema: SignupSchema });
+	const session = await authSessionStorage.getSession(
+		request.headers.get("cookie"),
+	);
+	const submission = await parseWithZod(formData, {
+		schema: () =>
+			SignupSchema.transform(async (data, ctx) => {
+				const session = await signUp(data);
+				if (session === null) {
+					ctx.addIssue({
+						code: z.ZodIssueCode.custom,
+						message: "Invalid username or password",
+					});
+					return z.NEVER;
+				}
+				return { ...data, session };
+			}),
+		async: true,
+	});
 
 	if (submission.status !== "success") {
+		console.log("something went wrong .. ,", submission.reply());
 		return data(
 			{ result: submission.reply() },
 			{
@@ -51,9 +74,17 @@ export async function action({ request }: Route.ActionArgs) {
 			},
 		);
 	}
+	session.set(sessionKey, submission.value.session.id);
 
-	console.log("Successfully validated:", submission.value);
-	return redirect("/");
+	return redirect("/", {
+		headers: {
+			"set-cookie": await authSessionStorage.commitSession(session, {
+				expires: submission.value.rememberMe
+					? submission.value.session.expiresAt
+					: undefined,
+			}),
+		},
+	});
 }
 
 export default function SignupPage({ actionData }: Route.ComponentProps) {
@@ -83,6 +114,17 @@ export default function SignupPage({ actionData }: Route.ComponentProps) {
 				</h2>
 
 				<Form method="post" {...getFormProps(form)} className="space-y-1">
+					<Field
+						labelProps={{ children: "username" }}
+						inputProps={{
+							...getInputProps(fields.username, { type: "text" }),
+							placeholder: "Username",
+							required: true,
+						}}
+						icon={faEnvelope}
+						errors={fields.username.errors}
+					/>
+
 					<Field
 						labelProps={{ children: "Email" }}
 						inputProps={{

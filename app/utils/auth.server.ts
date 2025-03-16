@@ -38,9 +38,7 @@ export async function verifyUserPassword(
 	emailOrUsername: string,
 	password: string,
 ) {
-	// Check if the input is an email (contains @) or a username
 	const isEmail = emailOrUsername.includes("@");
-
 	const userResults = await db
 		.select({
 			id: users.id,
@@ -75,7 +73,7 @@ export async function login({
 	password: string;
 }) {
 	const user = await verifyUserPassword(emailOrUsername, password);
-	if (!user) return null;
+	if (user === null) return null;
 
 	const expiresAt = getSessionExpirationDate();
 	const [{ sessionId }] = await db

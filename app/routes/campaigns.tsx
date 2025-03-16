@@ -1,6 +1,5 @@
-import React, { useState } from "react";
-import { Button } from "~/components/ui/button";
-import { Link } from "react-router";
+import { useState } from "react";
+import { Button } from "#app/components/ui/button";
 
 // Mock data for campaigns
 const mockCampaigns = [

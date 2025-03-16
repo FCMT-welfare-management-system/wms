@@ -6,15 +6,17 @@ import { Button } from "../../components/ui/button";
 import { z } from "zod";
 import type { Route } from "./+types/signup.ts";
 import { ErrorList } from "../../components/ui/errorList";
-import { CheckboxField, Field } from "~/components/forms";
+import { CheckboxField, Field } from "#app/components/forms";
 import {
 	EmailSchema,
 	NameSchema,
 	PasswordSchema,
 	UsernameSchema,
-} from "~/utils/user_validation";
-import { sessionKey, signUp } from "~/utils/auth.server";
-import { authSessionStorage } from "~/utils/session.server";
+} from "#app/utils/user_validation";
+import { sessionKey, signUp } from "#app/utils/auth.server";
+import { authSessionStorage } from "#app/utils/session.server";
+import { StatusButton } from "#app/components/ui/statusButton.js";
+import { useIsPending } from "#app/utils/misc.js";
 
 export function meta() {
 	return [
@@ -95,6 +97,7 @@ export default function SignupPage({ actionData }: Route.ComponentProps) {
 		},
 		shouldRevalidate: "onBlur",
 	});
+	const isPending = useIsPending();
 
 	return (
 		<div className="flex-1 flex justify-center items-center px-4 py-12">
@@ -200,9 +203,24 @@ export default function SignupPage({ actionData }: Route.ComponentProps) {
 						</div>
 					)}
 
-					<Button variant="accent" fullWidth type="submit" className="mt-4">
+					<StatusButton
+						variant="accent"
+						fullWidth
+						type="submit"
+						className="mt-4"
+						status={
+							isPending
+								? "pending"
+								: form.errors
+									? "error"
+									: form.status === "success"
+										? "success"
+										: "idle"
+						}
+						disabled={isPending}
+					>
 						Sign Up
-					</Button>
+					</StatusButton>
 				</Form>
 
 				<div className="mt-8 pt-6 border-t border-border text-center">

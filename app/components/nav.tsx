@@ -70,19 +70,11 @@ export default function Nav({ username }: NavProps) {
 			{/* Desktop Navigation - Always shown */}
 			<nav className="hidden md:block flex-1">
 				<ul className="flex ml-6 h-full items-center">
-					<NavItem
-						to="/member/dashboard"
-						icon={faTachometerAlt}
-						label="Dashboard"
-					/>
-					<NavItem to="/member/campaigns" icon={faDonate} label="Campaigns" />
-					<NavItem
-						to="/member/history"
-						icon={faHistory}
-						label="Contribution History"
-					/>
-					<NavItem to="/member/profile" icon={faUser} label="Profile" />
-					<NavItem to="/member/help" icon={faQuestionCircle} label="Help" />
+					<NavItem to="/" icon={faTachometerAlt} label="Dashboard" />
+					<NavItem to="/campaigns" icon={faDonate} label="Campaigns" />
+					<NavItem to="/" icon={faHistory} label="Contribution History" />
+					<NavItem to="/" icon={faUser} label="Profile" />
+					<NavItem to="/" icon={faQuestionCircle} label="Help" />
 				</ul>
 			</nav>
 
@@ -111,7 +103,7 @@ export default function Nav({ username }: NavProps) {
 							<div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-md shadow-lg z-10">
 								<div className="py-1">
 									<Link
-										to="/member/profile"
+										to="/"
 										className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
 										onClick={() => setIsUserDropdownOpen(false)}
 									>
@@ -143,11 +135,10 @@ export default function Nav({ username }: NavProps) {
 				)}
 			</div>
 
-			{/* Mobile Header Controls - Always show hamburger menu */}
 			<div className="flex items-center ml-auto gap-3 md:hidden">
 				{/* Conditional Profile or Login - Mobile */}
 				{username ? (
-					<Link to="/member/profile" className="flex items-center relative">
+					<Link to="/" className="flex items-center relative">
 						<div className="relative">
 							<FontAwesomeIcon
 								icon={faUserCircle}
@@ -164,7 +155,6 @@ export default function Nav({ username }: NavProps) {
 					</Button>
 				)}
 
-				{/* Mobile Menu Button - Always show */}
 				<button
 					className="text-white p-2"
 					onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -177,7 +167,6 @@ export default function Nav({ username }: NavProps) {
 				</button>
 			</div>
 
-			{/* Mobile Navigation Dropdown/Drawer - Always shows all navigation links */}
 			<div
 				className={`
 					absolute top-16 left-0 right-0 bg-brand shadow-lg md:hidden 
@@ -209,27 +198,11 @@ export default function Nav({ username }: NavProps) {
 				`}
 				>
 					{/* All navigation links shown regardless of login status */}
-					<MobileNavItem
-						to="/member/dashboard"
-						icon={faTachometerAlt}
-						label="Dashboard"
-					/>
-					<MobileNavItem
-						to="/member/campaigns"
-						icon={faDonate}
-						label="Campaigns"
-					/>
-					<MobileNavItem
-						to="/member/history"
-						icon={faHistory}
-						label="Contribution History"
-					/>
-					<MobileNavItem to="/member/profile" icon={faUser} label="Profile" />
-					<MobileNavItem
-						to="/member/help"
-						icon={faQuestionCircle}
-						label="Help"
-					/>
+					<MobileNavItem to="/" icon={faTachometerAlt} label="Dashboard" />
+					<MobileNavItem to="/campaigns" icon={faDonate} label="Campaigns" />
+					<MobileNavItem to="/" icon={faHistory} label="Contribution History" />
+					<MobileNavItem to="/" icon={faUser} label="Profile" />
+					<MobileNavItem to="/" icon={faQuestionCircle} label="Help" />
 
 					{/* Conditional Sign out option in mobile menu */}
 					{username ? (
@@ -247,6 +220,7 @@ export default function Nav({ username }: NavProps) {
 						<li className="border-t border-brand-darker">
 							<Link
 								to="/login"
+								prefetch="intent"
 								className="flex items-center gap-3 px-6 py-4 text-white hover:bg-brand-darker transition-colors"
 							>
 								<span>Log In</span>
@@ -259,7 +233,6 @@ export default function Nav({ username }: NavProps) {
 	);
 }
 
-// Desktop Navigation Item
 function NavItem({
 	to,
 	icon,
@@ -290,6 +263,7 @@ function MobileNavItem({
 		<li className="border-b border-brand-darker">
 			<Link
 				to={to}
+				prefetch="intent"
 				className="flex items-center gap-3 px-6 py-4 text-white hover:bg-brand-darker transition-colors"
 			>
 				<span className="text-lg text-primary-muted">

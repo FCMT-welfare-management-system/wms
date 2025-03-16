@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router";
 import { cva, type VariantProps } from "class-variance-authority";
-import { cn } from "../../utils/misc";
+import { cn } from "#app/utils/misc";
 
 const buttonVariants = cva(
 	"inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
@@ -51,6 +51,7 @@ export interface ButtonProps
 	asChild?: boolean;
 	href?: string;
 	external?: boolean;
+	prefetch?: "intent" | "none" | "render" | "viewport";
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
@@ -65,6 +66,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 			href,
 			external = false,
 			children,
+			prefetch,
 			disabled,
 			...props
 		},
@@ -87,15 +89,14 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 						)}
 						target="_blank"
 						rel="noopener noreferrer"
-					>
-						{children}
-					</a>
+					></a>
 				);
 			}
 
 			return (
 				<Link
 					to={href}
+					prefetch={prefetch}
 					className={cn(
 						buttonVariants({
 							variant,

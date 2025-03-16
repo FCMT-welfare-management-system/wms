@@ -3,32 +3,34 @@ import express from "express";
 
 const PORT = Number.parseInt(process.env.PORT || "3000");
 
+export const streamTimeout = 10000;
+
 const app = express();
 app.disable("x-powered-by");
 
 console.log("Starting development server");
 const viteDevServer = await import("vite").then((vite) =>
-  vite.createServer({
-    server: { middlewareMode: true },
-  })
+	vite.createServer({
+		server: { middlewareMode: true },
+	}),
 );
 app.use(viteDevServer.middlewares);
 app.use(async (req, res, next) => {
-  try {
-    return await createRequestListener(async (request) => {
-      const source = await viteDevServer.ssrLoadModule("./server/app.ts");
-      return await source.default(request, {
-        // TODO: Mock any required netlify functions context
-      });
-    })(req, res);
-  } catch (error) {
-    if (typeof error === "object" && error instanceof Error) {
-      viteDevServer.ssrFixStacktrace(error);
-    }
-    next(error);
-  }
+	try {
+		return await createRequestListener(async (request) => {
+			const source = await viteDevServer.ssrLoadModule("./server/app.ts");
+			return await source.default(request, {
+				// TODO: Mock any required netlify functions context
+			});
+		})(req, res);
+	} catch (error) {
+		if (typeof error === "object" && error instanceof Error) {
+			viteDevServer.ssrFixStacktrace(error);
+		}
+		next(error);
+	}
 });
 
 app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+	console.log(`Server is running on http://localhost:${PORT}`);
 });

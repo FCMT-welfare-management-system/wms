@@ -4,7 +4,7 @@ import { Label } from "./ui/label";
 import { Input, type InputProps } from "./ui/input";
 import { ErrorList, type ListOfErrors } from "./ui/errorList";
 import type { IconDefinition } from "@fortawesome/free-solid-svg-icons";
-import { cn } from "~/utils/misc";
+import { cn } from "#app/utils/misc";
 import { useId } from "react";
 
 interface FieldProps {
@@ -42,18 +42,6 @@ export function Field({
 			</div>
 		</div>
 	);
-}
-
-interface CheckboxFieldProps {
-	labelProps: React.ComponentProps<"label">;
-	buttonProps: CheckboxProps & {
-		name: string;
-		form: string;
-		value?: string;
-		key?: string;
-	};
-	errors?: ListOfErrors;
-	className?: string;
 }
 
 export function CheckboxField({

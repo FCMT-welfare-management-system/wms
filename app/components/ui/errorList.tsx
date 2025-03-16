@@ -1,4 +1,4 @@
-import { cn } from "~/utils/misc";
+import { cn } from "#app/utils/misc";
 
 export type ListOfErrors = Array<string | null | undefined> | null | undefined;
 

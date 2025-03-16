@@ -1,7 +1,6 @@
-import { init } from "~/utils/env.server";
+import { init } from "#app/utils/env.server";
 import * as schema from "./schema";
 import { drizzle } from "drizzle-orm/neon-http";
-import { sql } from "drizzle-orm";
 
 const mode = process.env.NODE_ENV || "development";
 

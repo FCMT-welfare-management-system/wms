@@ -8,15 +8,17 @@ import {
 	type ActionFunctionArgs,
 } from "react-router";
 import { faUser, faLock } from "@fortawesome/free-solid-svg-icons";
-import { Button } from "../../components/ui/button";
-import { Field } from "../../components/forms";
-import { PasswordSchema } from "../../utils/user_validation";
+import { Field } from "#app/components/forms";
+import { PasswordSchema } from "#app/utils/user_validation";
 import { z } from "zod";
 import type { Route } from "./+types/login";
-import { CheckboxField } from "~/components/forms";
-import { sessionKey, login } from "~/utils/auth.server";
-import { authSessionStorage } from "~/utils/session.server";
+import { CheckboxField } from "#app/components/forms";
+import { sessionKey, login } from "#app/utils/auth.server";
+import { authSessionStorage } from "#app/utils/session.server";
 import { ErrorList } from "../../components/ui/errorList";
+import { StatusButton } from "#app/components/ui/statusButton.js";
+import { useIsPending } from "#app/utils/misc.js";
+import { Button } from "#app/components/ui/button.js";
 
 export function meta({}: Route.MetaArgs) {
 	return [
@@ -36,18 +38,19 @@ const LoginSchema = z.object({
 
 export async function action({ request }: ActionFunctionArgs) {
 	const formData = await request.formData();
-	const session = await authSessionStorage.getSession(
+	const authSession = await authSessionStorage.getSession(
 		request.headers.get("cookie"),
 	);
 
 	const submission = await parseWithZod(formData, {
 		schema: () =>
 			LoginSchema.transform(async (data, ctx) => {
+				console.time("login");
 				const userSession = await login({
 					emailOrUsername: data.emailOrUsername,
 					password: data.password,
 				});
-
+				console.timeEnd("login");
 				if (userSession === null) {
 					ctx.addIssue({
 						code: z.ZodIssueCode.custom,
@@ -60,29 +63,27 @@ export async function action({ request }: ActionFunctionArgs) {
 		async: true,
 	});
 
-	if (submission.status !== "success") {
+	if (submission.status !== "success" || !submission.value.session) {
 		return data(
-			{ result: submission.reply() },
-			{
-				status: 400,
-			},
+			{ result: submission.reply({ hideFields: ["password"] }) },
+			{ status: submission.status === "error" ? 400 : 200 },
 		);
 	}
 
-	session.set(sessionKey, submission.value.session.id);
+	const { session, rememberMe } = submission.value;
+
+	authSession.set(sessionKey, submission.value.session.id);
 
 	return redirect("/", {
 		headers: {
-			"set-cookie": await authSessionStorage.commitSession(session, {
-				expires: submission.value.rememberMe
-					? submission.value.session.expiresAt
-					: undefined,
+			"set-cookie": await authSessionStorage.commitSession(authSession, {
+				expires: rememberMe ? session.expiresAt : undefined,
 			}),
 		},
 	});
 }
-
-export default function LoginPage({ actionData }: { actionData?: any }) {
+export default function LoginPage({ actionData }: Route.ComponentProps) {
+	console.log("actionData", actionData);
 	const [form, fields] = useForm({
 		id: "login-form",
 		constraint: getZodConstraint(LoginSchema),
@@ -92,6 +93,7 @@ export default function LoginPage({ actionData }: { actionData?: any }) {
 		},
 		shouldRevalidate: "onBlur",
 	});
+	const isPending = useIsPending();
 
 	return (
 		<main className="flex flex-col min-h-screen bg-gradient-to-b from-muted to-accent-brand/30">
@@ -157,9 +159,29 @@ export default function LoginPage({ actionData }: { actionData?: any }) {
 							</div>
 						)}
 
-						<Button variant="accent" fullWidth type="submit">
+						<StatusButton
+							variant="accent"
+							fullWidth
+							type="submit"
+							status={
+								isPending
+									? "pending"
+									: form.errors
+										? "error"
+										: form.status === "success"
+											? "success"
+											: "idle"
+							}
+							disabled={isPending}
+						>
 							Log In
+						</StatusButton>
+
+						{/* 
+              <Button variant="accent" type="submit">
+							log in
 						</Button>
+              */}
 
 						<div className="text-center text-body-sm text-muted-foreground">
 							<Link

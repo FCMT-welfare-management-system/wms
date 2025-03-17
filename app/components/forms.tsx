@@ -3,6 +3,7 @@ import { Checkbox, type CheckboxProps } from "./ui/checkbox";
 import { Label } from "./ui/label";
 import { Input, type InputProps } from "./ui/input";
 import { ErrorList, type ListOfErrors } from "./ui/errorList";
+import { Textarea } from "./ui/textarea";
 import type { IconDefinition } from "@fortawesome/free-solid-svg-icons";
 import { cn } from "#app/utils/misc";
 import { useId } from "react";
@@ -105,6 +106,36 @@ export function CheckboxField({
 				/>
 			</div>
 			<div className="px-4 pb-3 pt-1">
+				{errorId ? <ErrorList id={errorId} errors={errors} /> : null}
+			</div>
+		</div>
+	);
+}
+
+export function TextareaField({
+	labelProps,
+	textareaProps,
+	errors,
+	className,
+}: {
+	labelProps: React.LabelHTMLAttributes<HTMLLabelElement>;
+	textareaProps: React.TextareaHTMLAttributes<HTMLTextAreaElement>;
+	errors?: ListOfErrors;
+	className?: string;
+}) {
+	const fallbackId = useId();
+	const id = textareaProps.id ?? textareaProps.name ?? fallbackId;
+	const errorId = errors?.length ? `${id}-error` : undefined;
+	return (
+		<div className={cn("space-y-2", className)}>
+			<Label htmlFor={id} {...labelProps} />
+			<Textarea
+				id={id}
+				aria-invalid={errorId ? true : undefined}
+				aria-describedby={errorId}
+				{...textareaProps}
+			/>
+			<div className="min-h-[32px] pb-3 pt-1">
 				{errorId ? <ErrorList id={errorId} errors={errors} /> : null}
 			</div>
 		</div>

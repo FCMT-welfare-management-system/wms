@@ -4,24 +4,33 @@ import {
 	faBullhorn,
 	faTachometerAlt,
 	faUsers,
-	faFileAlt,
 	faBars,
 	faXmark,
 } from "@fortawesome/free-solid-svg-icons";
-import { Outlet } from "react-router";
+import { NavLink, Outlet } from "react-router";
 
-// Changed component name from AdminDashboard to AdminLayout
 const AdminLayout = () => {
 	const [sidebarOpen, setSidebarOpen] = useState(false);
 
 	const navItems = [
-		{ icon: faTachometerAlt, label: "Dashboard", active: true },
-		{ icon: faBullhorn, label: "Campaigns", active: false },
-		{ icon: faUsers, label: "Users", active: false },
-		{ icon: faFileAlt, label: "Reports", active: false },
+		{
+			icon: faTachometerAlt,
+			label: "Dashboard",
+			to: "/admin/Dashboard",
+		},
+		{
+			icon: faBullhorn,
+			label: "Campaigns",
+			to: "/admin/Campaigns",
+		},
+		{
+			icon: faUsers,
+			label: "Users",
+			to: "/admin/Users",
+		},
+		//{ icon: faFileAlt, label: "Reports", to: "/admin/Reports" },
 	];
 
-	// Sidebar component (to reuse for both desktop and mobile)
 	const Sidebar = ({ mobile = false }) => (
 		<div className={`bg-accent p-4 ${mobile ? "w-full" : "w-64"}`}>
 			<div className="flex items-center justify-between mb-8">
@@ -37,18 +46,21 @@ const AdminLayout = () => {
 			</div>
 			<nav className="space-y-2">
 				{navItems.map((item, index) => (
-					<a
+					<NavLink
 						key={index}
-						href="#"
-						className={`flex items-center p-3 rounded-md ${
-							item.active
-								? "bg-muted text-primary"
-								: "text-primary hover:bg-muted"
-						}`}
+						to={item.to}
+						className={({ isActive }) => `
+              flex items-center p-3 rounded-md transition-colors
+              ${
+								isActive
+									? "bg-muted text-primary font-medium"
+									: "text-primary hover:bg-muted/70"
+							}
+            `}
 					>
 						<FontAwesomeIcon icon={item.icon} className="w-5 h-5" />
 						<span className="ml-3">{item.label}</span>
-					</a>
+					</NavLink>
 				))}
 			</nav>
 		</div>

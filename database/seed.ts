@@ -1,6 +1,11 @@
 import bcrypt from "bcryptjs";
 import { db } from "./context";
 import { users } from "./schema";
+import { login } from "#app/utils/auth.server.js";
+import "dotenv/config";
+import { init } from "#app/utils/env.server.js";
+
+init();
 
 const testDb = async () => {
 	const password = "kodylovesyou";
@@ -20,5 +25,3 @@ const testDb = async () => {
 	console.log("⚡done all success");
 	console.log(result);
 };
-
-void testDb();

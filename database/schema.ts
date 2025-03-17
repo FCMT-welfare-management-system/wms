@@ -7,6 +7,7 @@ const timeStamps = {
 };
 
 const createIdColumn = () => p.uuid().defaultRandom().primaryKey();
+export const userRoleEnum = p.pgEnum("user_role", ["user", "admin"]);
 
 export const users = p.pgTable("users", {
 	id: createIdColumn(),
@@ -14,6 +15,7 @@ export const users = p.pgTable("users", {
 	email: p.varchar({ length: 255 }).notNull().unique(),
 	username: p.varchar({ length: 50 }).notNull().unique(),
 	passwordHash: p.text().notNull(),
+	role: userRoleEnum("user").notNull().default("user"),
 	...timeStamps,
 });
 

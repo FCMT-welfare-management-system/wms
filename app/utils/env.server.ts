@@ -4,6 +4,9 @@ const schema = z.object({
 	NODE_ENV: z.enum(["production", "development", "test"] as const),
 	DATABASE_URL: z.string(),
 	SESSION_SECRET: z.string(),
+	CLOUDINARY_CLOUD_NAME: z.string(),
+	CLOUDINARY_API_KEY: z.string(),
+	CLOUDINARY_API_SECRET: z.string(),
 });
 
 type Env = z.infer<typeof schema>;

@@ -8,7 +8,7 @@ import {
 	FormProvider,
 	type FieldMetadata,
 } from "@conform-to/react";
-import { Form } from "react-router";
+import { data, Form, redirect } from "react-router";
 import { z } from "zod";
 import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -18,12 +18,15 @@ import {
 	faPlusCircle,
 	faTrash,
 } from "@fortawesome/free-solid-svg-icons";
+import { parseFormData } from "@mjackson/form-data-parser";
 import { Field, TextareaField } from "#app/components/forms.js";
 import { Button } from "#app/components/ui/button";
 import { Label } from "#app/components/ui/label";
 import { ErrorList } from "#app/components/ui/errorList";
-import { StatusButton } from "#app/components/ui/statusButton.js";
-import { useIsPending } from "#app/utils/misc.js";
+import type { Route } from "./+types/campaigns";
+import { db } from "database/context";
+import { campaignImages, campaigns } from "database/schema";
+import { uploadImages } from "#app/utils/cloudinary.server.js";
 
 const MAX_UPLOAD_SIZE = 1024 * 1024 * 3; // 3MB
 
@@ -37,6 +40,7 @@ const campaignCategories = [
 	"tech_resources",
 	"other",
 ] as const;
+const campaignStatus = ["active", "completed", "cancelled"] as const;
 
 const ImageFieldsetSchema = z.object({
 	id: z.string().optional(),
@@ -63,13 +67,77 @@ const CampaignSchema = z.object({
 		.min(20, { message: "Description must be at least 20 characters" }),
 	goal: z.number().min(1000, { message: "Goal must be at least 1,000 KES" }),
 	category: z.enum(campaignCategories),
-	endDate: z.string().optional(),
+	raised: z.number().default(0),
+	status: z.enum(campaignStatus).default("active"),
+	startDate: z.date(),
+	endDate: z.date().optional(),
 	images: z.array(ImageFieldsetSchema).max(5).optional(),
 });
 
-export default function AdminCampaigns() {
-	const isPending = useIsPending();
+export const streamTimeout = 10000;
 
+export async function action({ request }: Route.ActionArgs) {
+	console.log("submitting form...");
+	const formData = await parseFormData(request, {
+		maxFileSize: MAX_UPLOAD_SIZE,
+	});
+	const submission = await parseWithZod(formData, {
+		schema: CampaignSchema.superRefine(async (data, ctx) => {
+			const [campaign] = await db
+				.insert(campaigns)
+				.values({
+					title: data.title,
+					description: data.description,
+					goal: data.goal,
+					category: data.category,
+					raised: data.raised,
+					status: data.status,
+					startDate: data.startDate,
+					endDate: data.endDate,
+				})
+				.returning({ id: campaigns.id });
+			try {
+				console.log("uploading the images...");
+				console.time("uploadImages");
+				const cloudinaryImages = await uploadImages(data.images);
+				console.log("inserting images...");
+				console.time("insertImages");
+				const images = cloudinaryImages.map((image) => {
+					return {
+						campaignId: campaign.id,
+						...image,
+					};
+				});
+				await db.insert(campaignImages).values(images);
+				console.timeEnd("insertImages");
+			} catch (error) {
+				if (error instanceof Error) {
+					console.error(error.message);
+					ctx.addIssue({
+						code: z.ZodIssueCode.custom,
+						message: error.message,
+					});
+					return z.NEVER;
+				}
+			}
+		}),
+		async: true,
+	});
+	if (submission.status !== "success")
+		return data(
+			{
+				result: submission.reply(),
+			},
+			{
+				status: 400,
+			},
+		);
+
+	console.log(submission.status);
+	return redirect("/admin/dashboard");
+}
+
+export default function AdminCampaigns() {
 	const [form, fields] = useForm({
 		id: "campaign-creation-form",
 		constraint: getZodConstraint(CampaignSchema),
@@ -122,12 +190,21 @@ export default function AdminCampaigns() {
 							inputProps={{
 								...getInputProps(fields.goal, { type: "number" }),
 								placeholder: "Goal amount in KES",
-								min: 1000,
+								min: 10,
 								step: 1000,
 							}}
 							errors={fields.goal.errors}
 						/>
-
+						<Field
+							labelProps={{ children: "Raised" }}
+							inputProps={{
+								...getInputProps(fields.raised, { type: "number" }),
+								placeholder: "raised amount in KES",
+								min: 10,
+								step: 1000,
+							}}
+							errors={fields.raised.errors}
+						/>
 						<div>
 							<Label htmlFor={fields.category.id}>Category</Label>
 							<select
@@ -154,7 +231,51 @@ export default function AdminCampaigns() {
 								errors={fields.category.errors}
 							/>
 						</div>
+						<div>
+							<Label htmlFor={fields.status.id}>Campaign Status</Label>
+							<select
+								id={fields.status.id}
+								name={fields.status.name}
+								className="w-full p-2 border border-input rounded-md bg-background"
+								aria-invalid={Boolean(fields.status.errors?.length)}
+								aria-describedby={fields.status.errorId}
+							>
+								<option value="">Select the campaign status</option>
+								{campaignStatus.map((status) => (
+									<option key={status} value={status}>
+										{status
+											.split("_")
+											.map(
+												(word) => word.charAt(0).toUpperCase() + word.slice(1),
+											)
+											.join(" ")}
+									</option>
+								))}
+							</select>
+							<ErrorList
+								id={fields.status.errorId}
+								errors={fields.status.errors}
+							/>
+						</div>
 					</div>
+					<Field
+						labelProps={{
+							children: (
+								<div className="flex items-center gap-2">
+									<FontAwesomeIcon
+										icon={faCalendarAlt}
+										className="text-brand-secondary"
+									/>
+									<span>Start Date</span>
+								</div>
+							),
+						}}
+						inputProps={{
+							...getInputProps(fields.startDate, { type: "date" }),
+						}}
+						errors={fields.startDate.errors}
+					/>
+
 					<Field
 						labelProps={{
 							children: (
@@ -235,23 +356,9 @@ export default function AdminCampaigns() {
 						>
 							Reset
 						</Button>
-						<StatusButton
-							variant="accent"
-							type="submit"
-							className="px-8"
-							status={
-								isPending
-									? "pending"
-									: form.errors
-										? "error"
-										: form.status === "success"
-											? "success"
-											: "idle"
-							}
-							disabled={isPending}
-						>
+						<Button variant="accent" type="submit" className="px-8">
 							Create Campaign
-						</StatusButton>
+						</Button>
 					</div>
 				</Form>
 			</FormProvider>
@@ -267,6 +374,9 @@ function ImageChooser({
 	const fields = meta.getFieldset();
 	const [previewImage, setPreviewImage] = useState<string | null>(null);
 	const [altText, setAltText] = useState(fields.altText.initialValue ?? "");
+
+	const fileInputProps = getInputProps(fields.file, { type: "file" });
+	const { key, ...fileInputPropsWithoutKey } = fileInputProps;
 
 	return (
 		<fieldset {...getFieldsetProps(meta)}>
@@ -301,6 +411,7 @@ function ImageChooser({
 							)}
 
 							<input
+								key={key}
 								aria-label="Campaign Image"
 								className="absolute left-0 top-0 h-full w-full cursor-pointer opacity-0"
 								onChange={(event) => {
@@ -316,7 +427,7 @@ function ImageChooser({
 									}
 								}}
 								accept="image/*"
-								{...getInputProps(fields.file, { type: "file" })}
+								{...fileInputPropsWithoutKey}
 							/>
 						</label>
 					</div>

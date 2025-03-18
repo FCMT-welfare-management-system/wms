@@ -8,3 +8,23 @@
 
 # Netlify
 .netlify
+
+# Local/temporary files (untracked files)
+**/*.local.ts
+**/*.local.tsx
+**/*.local.js
+**/*.local.jsx
+**/*.dev.ts
+**/*.dev.tsx
+**/*.dev.js
+**/*.dev.jsx
+**/*.tmp.ts
+**/*.tmp.tsx
+**/*.tmp.js
+**/*.tmp.jsx
+**/temp-*.*
+**/local-*.*
+**/_*.ts
+**/_*.tsx
+**/_*.js
+**/_*.jsx

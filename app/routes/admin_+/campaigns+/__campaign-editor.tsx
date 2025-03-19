@@ -8,7 +8,8 @@ import {
 	FormProvider,
 	type FieldMetadata,
 } from "@conform-to/react";
-import { data, Form, redirect } from "react-router";
+import { Form } from "react-router";
+import type { Info } from "./+types/$campaignId.edit";
 import { z } from "zod";
 import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -18,19 +19,14 @@ import {
 	faPlusCircle,
 	faTrash,
 } from "@fortawesome/free-solid-svg-icons";
-import { parseFormData } from "@mjackson/form-data-parser";
 import { Field, TextareaField } from "#app/components/forms.js";
 import { Button } from "#app/components/ui/button";
 import { Label } from "#app/components/ui/label";
 import { ErrorList } from "#app/components/ui/errorList";
-import type { Route } from "./+types/campaigns";
-import { db } from "database/context";
-import { campaignImages, campaigns } from "database/schema";
-import { uploadImages } from "#app/utils/cloudinary.server.js";
 
-const MAX_UPLOAD_SIZE = 1024 * 1024 * 3; // 3MB
+export const MAX_UPLOAD_SIZE = 1024 * 1024 * 3; // 3MB
 
-const campaignCategories = [
+export const campaignCategories = [
 	"tuition_assistance",
 	"medical_emergency",
 	"housing_support",
@@ -40,7 +36,7 @@ const campaignCategories = [
 	"tech_resources",
 	"other",
 ] as const;
-const campaignStatus = ["active", "completed", "cancelled"] as const;
+export const campaignStatus = ["active", "completed", "cancelled"] as const;
 
 const ImageFieldsetSchema = z.object({
 	id: z.string().optional(),
@@ -57,7 +53,7 @@ const ImageFieldsetSchema = z.object({
 
 export type ImageFieldset = z.infer<typeof ImageFieldsetSchema>;
 
-const CampaignSchema = z.object({
+export const CampaignSchema = z.object({
 	title: z
 		.string()
 		.min(10, { message: "Title must be at least 10 characters" })
@@ -74,78 +70,23 @@ const CampaignSchema = z.object({
 	images: z.array(ImageFieldsetSchema).max(5).optional(),
 });
 
-export const streamTimeout = 10000;
-
-export async function action({ request }: Route.ActionArgs) {
-	console.log("submitting form...");
-	const formData = await parseFormData(request, {
-		maxFileSize: MAX_UPLOAD_SIZE,
-	});
-	const submission = await parseWithZod(formData, {
-		schema: CampaignSchema.superRefine(async (data, ctx) => {
-			const [campaign] = await db
-				.insert(campaigns)
-				.values({
-					title: data.title,
-					description: data.description,
-					goal: data.goal,
-					category: data.category,
-					raised: data.raised,
-					status: data.status,
-					startDate: data.startDate,
-					endDate: data.endDate,
-				})
-				.returning({ id: campaigns.id });
-			try {
-				console.log("uploading the images...");
-				console.time("uploadImages");
-				const cloudinaryImages = await uploadImages(data.images);
-				console.log("inserting images...");
-				console.time("insertImages");
-				const images = cloudinaryImages.map((image) => {
-					return {
-						campaignId: campaign.id,
-						...image,
-					};
-				});
-				await db.insert(campaignImages).values(images);
-				console.timeEnd("insertImages");
-			} catch (error) {
-				if (error instanceof Error) {
-					console.error(error.message);
-					ctx.addIssue({
-						code: z.ZodIssueCode.custom,
-						message: error.message,
-					});
-					return z.NEVER;
-				}
-			}
-		}),
-		async: true,
-	});
-	if (submission.status !== "success")
-		return data(
-			{
-				result: submission.reply(),
-			},
-			{
-				status: 400,
-			},
-		);
-
-	console.log(submission.status);
-	return redirect("/admin/dashboard");
-}
-
-export default function AdminCampaigns() {
+export default function CampaignEditor({
+	campaign,
+	actionData,
+}: {
+	campaign?: Info["loaderData"]["campaign"];
+	actionData?: Info["actionData"];
+}) {
 	const [form, fields] = useForm({
 		id: "campaign-creation-form",
 		constraint: getZodConstraint(CampaignSchema),
+		lastResult: actionData?.result,
 		onValidate({ formData }) {
 			return parseWithZod(formData, { schema: CampaignSchema });
 		},
 		defaultValue: {
-			images: [{}],
+			...campaign,
+			images: campaign?.images || [{}],
 		},
 		shouldRevalidate: "onBlur",
 	});

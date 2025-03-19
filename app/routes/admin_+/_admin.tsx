@@ -16,7 +16,7 @@ const AdminLayout = () => {
 		{
 			icon: faTachometerAlt,
 			label: "Dashboard",
-			to: "/admin/Dashboard",
+			to: "/admin/dashboard",
 		},
 		{
 			icon: faBullhorn,

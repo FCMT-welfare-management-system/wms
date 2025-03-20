@@ -23,7 +23,7 @@ export function GeneralErrorBoundary({
 	defaultStatusHandler = () => <NotFoundComponent />,
 	statusHandlers = {
 		400: () => <NotFoundComponent />,
-		401: () => <UnauthorizedComponent />,
+		402: () => <UnauthorizedComponent />,
 		403: () => <ForbiddenComponent />,
 		404: () => <NotFoundComponent />,
 		500: () => <ServerErrorComponent />,

@@ -7,7 +7,7 @@ import {
 	faBars,
 	faXmark,
 } from "@fortawesome/free-solid-svg-icons";
-import { NavLink, Outlet, redirect } from "react-router";
+import { data, NavLink, Outlet, redirect } from "react-router";
 import type { Route } from "./+types/_admin";
 import { requireUserId } from "#app/utils/auth.server.js";
 import { db } from "database/context";
@@ -36,8 +36,13 @@ export async function loader({ request }: Route.LoaderArgs) {
 	if (!isAdmin(userId)) {
 		return redirect("/");
 	}
-
-	return { userId };
+	console.log("admin authenticated");
+	return data(
+		{},
+		{
+			status: 200,
+		},
+	);
 }
 
 const AdminLayout = () => {
@@ -55,9 +60,9 @@ const AdminLayout = () => {
 			to: "/admin/Campaigns",
 		},
 		{
-			icon: faUsers,
-			label: "Users",
-			to: "/admin/Users",
+			icon: faBullhorn,
+			label: "new",
+			to: "/admin/Campaigns/new",
 		},
 	];
 
@@ -80,13 +85,14 @@ const AdminLayout = () => {
 						key={index}
 						to={item.to}
 						className={({ isActive }) => `
-              flex items-center p-3 rounded-md transition-colors
-              ${
-								isActive
-									? "bg-muted text-primary font-medium"
-									: "text-primary hover:bg-muted/70"
-							}
-            `}
+    flex items-center p-3 rounded-md transition-colors
+    ${
+			isActive
+				? "bg-muted text-primary font-medium"
+				: "text-primary hover:bg-muted/70"
+		}
+  `}
+						end={true} // This ensures exact path matching
 					>
 						<FontAwesomeIcon icon={item.icon} className="w-5 h-5" />
 						<span className="ml-3">{item.label}</span>

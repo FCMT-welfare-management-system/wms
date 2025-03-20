@@ -34,6 +34,16 @@ export const getUserId = async (request: Request) => {
 	return userResults.length > 0 ? userResults[0].userId : null;
 };
 
+export async function requireUserId(request: Request, redirectTo = "/login") {
+	const userId = await getUserId(request);
+
+	if (!userId) {
+		throw redirect(redirectTo);
+	}
+
+	return userId;
+}
+
 export async function verifyUserPassword(
 	emailOrUsername: string,
 	password: string,

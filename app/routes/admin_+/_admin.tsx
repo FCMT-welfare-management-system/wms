@@ -7,7 +7,32 @@ import {
 	faBars,
 	faXmark,
 } from "@fortawesome/free-solid-svg-icons";
-import { NavLink, Outlet } from "react-router";
+import { NavLink, Outlet, redirect } from "react-router";
+import type { Route } from "./+types/_admin";
+import { requireUserId } from "#app/utils/auth.server.js";
+import { db } from "database/context";
+import { users } from "database/schema";
+import { eq } from "drizzle-orm";
+
+export async function loader({ request }: Route.LoaderArgs) {
+	const userId = await requireUserId(request);
+	const [user] = await db
+		.select({
+			role: users.role,
+		})
+		.from(users)
+		.where(eq(users.id, userId));
+
+	if (!user) {
+		return redirect("/login");
+	}
+
+	if (user.role !== "admin") {
+		return redirect("/");
+	}
+
+	return { userId };
+}
 
 const AdminLayout = () => {
 	const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -28,7 +53,6 @@ const AdminLayout = () => {
 			label: "Users",
 			to: "/admin/Users",
 		},
-		//{ icon: faFileAlt, label: "Reports", to: "/admin/Reports" },
 	];
 
 	const Sidebar = ({ mobile = false }) => (

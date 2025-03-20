@@ -1,3 +1,4 @@
+import { init } from "#app/utils/env.server.js";
 import type { Config, Context } from "@netlify/functions";
 import { createRequestHandler } from "react-router";
 
@@ -6,7 +7,7 @@ declare module "react-router" {
 		VALUE_FROM_NETLIFY: string;
 	}
 }
-
+init();
 export const streamTimeout = 10000;
 
 const requestHandler = createRequestHandler(

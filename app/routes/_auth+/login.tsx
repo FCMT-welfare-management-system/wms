@@ -18,6 +18,7 @@ import { authSessionStorage } from "#app/utils/session.server";
 import { ErrorList } from "../../components/ui/errorList";
 import { StatusButton } from "#app/components/ui/statusButton.js";
 import { useIsPending } from "#app/utils/misc.js";
+import { GeneralErrorBoundary } from "#app/components/ui/error-boundary.js";
 
 export function meta({}: Route.MetaArgs) {
 	return [
@@ -207,4 +208,8 @@ export default function LoginPage({ actionData }: Route.ComponentProps) {
 			</div>
 		</main>
 	);
+}
+
+export function ErrorBoundary() {
+	return <GeneralErrorBoundary />;
 }

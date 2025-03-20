@@ -1,3 +1,4 @@
+import { GeneralErrorBoundary } from "#app/components/ui/error-boundary.js";
 import {
 	faBullhorn,
 	faPeopleGroup,
@@ -215,4 +216,8 @@ export default function AdminDashboard() {
 			</div>
 		</div>
 	);
+}
+
+export function ErrorBoundary() {
+	return <GeneralErrorBoundary />;
 }

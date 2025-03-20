@@ -9,12 +9,22 @@ import { campaignImages, campaigns } from "database/schema";
 import { data, redirect, type ActionFunctionArgs } from "react-router";
 import { CampaignSchema, MAX_UPLOAD_SIZE } from "./__campaign-editor";
 import { and, eq, notInArray } from "drizzle-orm";
+import { requireUserId } from "#app/utils/auth.server.js";
+import { isAdmin } from "../_admin";
 
 interface CampaignResult {
 	id: string;
 }
 
 export async function action({ request, params }: ActionFunctionArgs) {
+	const userId = await requireUserId(request);
+	if (!isAdmin(userId))
+		throw data(
+			{},
+			{
+				status: 400,
+			},
+		);
 	const formData = await parseFormData(request, {
 		maxFileSize: MAX_UPLOAD_SIZE,
 	});

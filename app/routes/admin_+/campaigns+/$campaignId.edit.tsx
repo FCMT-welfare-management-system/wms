@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { campaigns } from "database/schema";
 import type { Route } from "./+types/$campaignId.edit";
 import CampaignEditor from "./__campaign-editor";
+import { GeneralErrorBoundary } from "#app/components/ui/error-boundary.js";
 
 export { action } from "./__campaign-editor.server";
 
@@ -35,4 +36,8 @@ export default function CampaignEdit({
 	return (
 		<CampaignEditor actionData={actionData} campaign={loaderData.campaign} />
 	);
+}
+
+export function ErrorBoundary() {
+	return <GeneralErrorBoundary />;
 }

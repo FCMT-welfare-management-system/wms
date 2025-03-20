@@ -17,6 +17,7 @@ import { sessionKey, signUp } from "#app/utils/auth.server";
 import { authSessionStorage } from "#app/utils/session.server";
 import { StatusButton } from "#app/components/ui/statusButton.js";
 import { useIsPending } from "#app/utils/misc.js";
+import { GeneralErrorBoundary } from "#app/components/ui/error-boundary.js";
 
 export function meta() {
 	return [
@@ -243,4 +244,8 @@ export default function SignupPage({ actionData }: Route.ComponentProps) {
 			</div>
 		</div>
 	);
+}
+
+export function ErrorBoundary() {
+	return <GeneralErrorBoundary />;
 }

@@ -14,6 +14,7 @@ import { count, desc, eq } from "drizzle-orm";
 import type { Route } from "./+types/campaigns";
 import { db } from "database/context";
 import { campaigns, donations } from "database/schema";
+import { GeneralErrorBoundary } from "#app/components/ui/error-boundary.js";
 
 interface Campaign {
 	id: string;
@@ -251,4 +252,8 @@ export default function Campaigns({ loaderData }: Route.ComponentProps) {
 			)}
 		</div>
 	);
+}
+
+export function ErrorBoundary() {
+	return <GeneralErrorBoundary />;
 }

@@ -13,9 +13,9 @@ import { requireUserId } from "#app/utils/auth.server.js";
 import { db } from "database/context";
 import { users } from "database/schema";
 import { eq } from "drizzle-orm";
+import { GeneralErrorBoundary } from "#app/components/ui/error-boundary.js";
 
-export async function loader({ request }: Route.LoaderArgs) {
-	const userId = await requireUserId(request);
+export async function isAdmin(userId: string) {
 	const [user] = await db
 		.select({
 			role: users.role,
@@ -23,11 +23,17 @@ export async function loader({ request }: Route.LoaderArgs) {
 		.from(users)
 		.where(eq(users.id, userId));
 
-	if (!user) {
+	if (!user) return false;
+
+	return user.role !== "admin";
+}
+export async function loader({ request }: Route.LoaderArgs) {
+	const userId = await requireUserId(request);
+	if (!userId) {
 		return redirect("/login");
 	}
 
-	if (user.role !== "admin") {
+	if (!isAdmin(userId)) {
 		return redirect("/");
 	}
 
@@ -137,3 +143,7 @@ const AdminLayout = () => {
 };
 
 export default AdminLayout;
+
+export function ErrorBoundary() {
+	return <GeneralErrorBoundary />;
+}

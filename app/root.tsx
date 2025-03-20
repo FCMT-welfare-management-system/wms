@@ -57,6 +57,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 				username: users.username,
 				name: users.name,
 				email: users.email,
+				role: users.role,
 			})
 			.from(users)
 			.where(eq(users.id, userId));
@@ -75,7 +76,7 @@ export default function App({ loaderData }: Route.ComponentProps) {
 	const { user } = loaderData;
 	return (
 		<main>
-			<Nav username={user?.username} />
+			<Nav username={user?.username} role={user?.role} />
 			<Outlet />
 			<footer className="mt-auto bg-accent-brand py-6 px-4 text-center text-foreground">
 				<p className="text-body-sm">

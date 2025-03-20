@@ -10,19 +10,23 @@ import {
 	faTimes,
 	faUserCircle,
 	faChevronDown,
+	faShieldAlt,
 } from "@fortawesome/free-solid-svg-icons";
 import { useEffect, useState, useRef } from "react";
 import { Button } from "./ui/button";
 
 interface NavProps {
 	username: string | undefined;
+	role: "user" | "admin" | undefined;
 }
 
-export default function Nav({ username }: NavProps) {
+export default function Nav({ username, role }: NavProps) {
 	const [isMenuOpen, setIsMenuOpen] = useState(false);
 	const [hasJSLoaded, setHasJSLoaded] = useState(false);
 	const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
 	const userDropdownRef = useRef<HTMLDivElement>(null);
+
+	const isAdmin = role === "admin";
 
 	useEffect(() => {
 		setHasJSLoaded(true);
@@ -75,6 +79,9 @@ export default function Nav({ username }: NavProps) {
 					<NavItem to="/" icon={faHistory} label="Contribution History" />
 					<NavItem to="/" icon={faUser} label="Profile" />
 					<NavItem to="/" icon={faQuestionCircle} label="Help" />
+					{isAdmin && (
+						<NavItem to="/admin" icon={faShieldAlt} label="Admin Dashboard" />
+					)}
 				</ul>
 			</nav>
 
@@ -116,13 +123,25 @@ export default function Nav({ username }: NavProps) {
 									>
 										Settings
 									</Link>
+									{/* Admin link in dropdown too */}
+									{isAdmin && (
+										<Link
+											to="/admin"
+											className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+											onClick={() => setIsUserDropdownOpen(false)}
+										>
+											Admin Dashboard
+										</Link>
+									)}
 									<div className="border-t border-gray-200"></div>
 									<Form
-										className="block w-max px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+										className="block w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
 										method="post"
 										action="/logout"
 									>
-										log out
+										<button type="submit" className="w-full text-left">
+											Log out
+										</button>
 									</Form>
 								</div>
 							</div>
@@ -130,12 +149,13 @@ export default function Nav({ username }: NavProps) {
 					</div>
 				) : (
 					<Button variant={"default"} href="/login">
-						log in
+						Log in
 					</Button>
 				)}
 			</div>
 
-			<div className="flex items-center ml-auto gap-3 md:hidden">
+			{/* Mobile navigation controls */}
+			<div className="md:hidden ml-auto flex items-center gap-3">
 				{/* Conditional Profile or Login - Mobile */}
 				{username ? (
 					<Link to="/" className="flex items-center relative">
@@ -150,13 +170,14 @@ export default function Nav({ username }: NavProps) {
 						</div>
 					</Link>
 				) : (
-					<Button variant={"default"} href="/login">
-						log in
+					<Button variant={"default"} href="/login" size="sm">
+						Log in
 					</Button>
 				)}
 
+				{/* Hamburger Menu Button - FIXED */}
 				<button
-					className="text-white p-2"
+					className="text-white p-2 block"
 					onClick={() => setIsMenuOpen(!isMenuOpen)}
 					aria-label="Toggle menu"
 				>
@@ -164,12 +185,15 @@ export default function Nav({ username }: NavProps) {
 						icon={isMenuOpen ? faTimes : faBars}
 						className="text-xl"
 					/>
+					{/* Fallback in case icon doesn't load */}
+					<span className="sr-only">Menu</span>
 				</button>
 			</div>
 
+			{/* Mobile Menu Dropdown */}
 			<div
 				className={`
-					absolute top-16 left-0 right-0 bg-brand shadow-lg md:hidden 
+					absolute top-16 left-0 right-0 bg-brand shadow-lg z-50 md:hidden
 					${hasJSLoaded ? (isMenuOpen ? "block" : "hidden") : "block md:hidden"}
 				`}
 			>
@@ -204,15 +228,24 @@ export default function Nav({ username }: NavProps) {
 					<MobileNavItem to="/" icon={faUser} label="Profile" />
 					<MobileNavItem to="/" icon={faQuestionCircle} label="Help" />
 
+					{/* Admin Dashboard link in mobile menu - only shown for admins */}
+					{isAdmin && (
+						<MobileNavItem
+							to="/admin"
+							icon={faShieldAlt}
+							label="Admin Dashboard"
+						/>
+					)}
+
 					{/* Conditional Sign out option in mobile menu */}
 					{username ? (
 						<li className="border-t border-brand-darker">
 							<Form method="post" action="/logout">
 								<button
 									type="submit"
-									className="flex items-center gap-3 px-6 py-4 text-white hover:bg-brand-darker transition-colors"
+									className="flex w-full items-center gap-3 px-6 py-4 text-white hover:bg-brand-darker transition-colors"
 								>
-									log out
+									Log out
 								</button>
 							</Form>
 						</li>

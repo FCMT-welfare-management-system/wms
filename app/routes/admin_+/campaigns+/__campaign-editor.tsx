@@ -49,6 +49,7 @@ const ImageFieldsetSchema = z.object({
 		),
 	altText: z.string().optional(),
 	contentType: z.string().optional(),
+	url: z.string().optional(),
 });
 
 export type ImageFieldset = z.infer<typeof ImageFieldsetSchema>;
@@ -313,14 +314,37 @@ function ImageChooser({
 	meta: FieldMetadata<ImageFieldset>;
 }) {
 	const fields = meta.getFieldset();
-	const [previewImage, setPreviewImage] = useState<string | null>(null);
+
+	// Initialize preview image with existing image URL if available
+	const [previewImage, setPreviewImage] = useState<string | null>(
+		fields.url?.initialValue || null,
+	);
 	const [altText, setAltText] = useState(fields.altText.initialValue ?? "");
 
 	const fileInputProps = getInputProps(fields.file, { type: "file" });
 	const { key, ...fileInputPropsWithoutKey } = fileInputProps;
 
+	const hasExistingId = !!fields.id?.initialValue;
+
 	return (
 		<fieldset {...getFieldsetProps(meta)}>
+			{/* Hidden inputs to maintain existing image data during form submission */}
+			{hasExistingId && (
+				<input
+					type="hidden"
+					name={fields.id.name}
+					value={fields.id.initialValue}
+				/>
+			)}
+
+			{fields.url?.initialValue && (
+				<input
+					type="hidden"
+					name={fields.url.name}
+					value={fields.url.initialValue}
+				/>
+			)}
+
 			<div className="flex flex-col gap-3">
 				<div className="w-full">
 					<div className="relative h-48 w-full">
@@ -389,6 +413,15 @@ function ImageChooser({
 						onChange={(e) => setAltText(e.currentTarget.value)}
 						value={altText}
 					/>
+
+					{/* Hidden input to preserve alt text if no changes */}
+					{fields.contentType?.initialValue && (
+						<input
+							type="hidden"
+							name={fields.contentType.name}
+							value={fields.contentType.initialValue}
+						/>
+					)}
 				</div>
 			</div>
 

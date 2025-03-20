@@ -105,3 +105,29 @@ export async function uploadImages(
 
 	return uploadResults;
 }
+
+export async function deleteCloudinaryImages(
+	publicIds: string[],
+): Promise<{ deleted: string[]; failed: string[] }> {
+	if (!publicIds || publicIds.length === 0) {
+		return { deleted: [], failed: [] };
+	}
+
+	const deleted: string[] = [];
+	const failed: string[] = [];
+
+	for (const publicId of publicIds) {
+		try {
+			// Extract the actual ID from the path if it includes folders
+			const id = publicId.includes("/") ? publicId : `campaigns/${publicId}`;
+
+			await cloudinary.uploader.destroy(id);
+			deleted.push(publicId);
+		} catch (error) {
+			console.error(`Error deleting image ${publicId} from Cloudinary:`, error);
+			failed.push(publicId);
+		}
+	}
+
+	return { deleted, failed };
+}
